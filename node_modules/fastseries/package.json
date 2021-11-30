@@ -1,0 +1,44 @@
+{
+  "name": "fastseries",
+  "version": "2.0.0",
+  "description": "Zero-overhead asynchronous series/each/map function calls",
+  "main": "series.js",
+  "scripts": {
+    "lint": "standard --verbose | snazzy",
+    "unit": "tape test.js",
+    "unit:report": "nyc --reporter=html --reporter=cobertura --reporter=text tape test.js",
+    "unit:cov": "nyc --reporter=lcovonly tape test.js",
+    "cov": "nyc --reporter=text tape test.js",
+    "test:report": "npm run lint && npm run unit:report",
+    "test": "npm run lint && npm run unit:cov"
+  },
+  "pre-commit": [
+    "test"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcollina/fastseries.git"
+  },
+  "keywords": [
+    "series",
+    "fast",
+    "async"
+  ],
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mcollina/fastseries/issues"
+  },
+  "homepage": "https://github.com/mcollina/fastseries",
+  "devDependencies": {
+    "async": "^3.2.0",
+    "fastbench": "^1.0.1",
+    "neo-async": "^2.6.1",
+    "nyc": "^15.0.0",
+    "pre-commit": "^1.2.2",
+    "snazzy": "^8.0.0",
+    "standard": "^14.3.1",
+    "tape": "^4.13.0",
+    "tiny-each-async": "^2.0.3"
+  }
+}

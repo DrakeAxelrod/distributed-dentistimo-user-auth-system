@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "noEmit": true,
+    "strict": true
+  },
+  "include": [
+    "/test/types/*.test-d.ts",
+    "/types/*.d.ts",
+    "aedes.d.ts"
+  ]
+}
