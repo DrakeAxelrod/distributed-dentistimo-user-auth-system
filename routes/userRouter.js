@@ -45,14 +45,44 @@ userRouter.route('/').get((req, res, next) => {
     })
 })
 
+userRouter.route('/:id').get((req, res) => {
+    userModel.findOne({_id: req.params.id}, (error, foundUser) => {
+        if (error) {return error}
+        else if (!foundUser) {res.status(404).json({"message":"User not found"})}
+        else {res.status(200).json({foundUser})}
+    })
+}).delete((req, res) => {
+    userModel.findOneAndDelete({_id: req.params.id}, (error, foundUser) => {
+        if (error) {return error}
+        else if (!foundUser) {res.status(404).json({"message": "User not found"})}
+        else {res.status(200).json({foundUser})}
+    })
+}).patch((req, res) => {
+        userModel.findOneAndUpdate({_id: req.params.id}, {useFindAndModify: false}, (error, foundUser) => {
+                foundUser.email = (req.body.email || foundUser.email)
+                foundUser.name = (req.body.name || foundUser.name)
+                foundUser.personalNumber = (req.body.personalNumber || foundUser.personalNumber)
+                foundUser.phone = (req.body.phone || foundUser.phone)
+                foundUser.password = (req.body.password || foundUser.password)
+            foundUser.save()
+        }).then((updatedUser) => {
+            console.log(`updatedUser: ${updatedUser}`)
+            res.json({updatedUser})
+        }).catch(error => {console.log(error)})
+})
+
+userRouter.route('/emails/:email').get((req, res) => {
+    let userEmail = req.params.email
+    userModel.findOne({email: userEmail}, (error, foundUser) => {
+        if (error) {return error}
+        else if (!foundUser) {res.status(404).json({"message": "User not found"})}
+        else {res.status(200).json({foundUser})}
+    })
+})
+
 
 passport.use(new LocalStrategy({usernameField: "email", passwordField: "password"},  (email, password, done) => {
     userModel.findOne({email: email}).then(foundUser => {
-        console.log('FOUNDUSER:')
-        console.log(foundUser)
-
-        console.log(`EMAIL: ${email}`)
-        console.log(`PASS: ${password}`)
 
       if (!foundUser) {console.log('No user found')
       return done(null, false, {"message":"User not found"})
