@@ -1,0 +1,37 @@
+image: node:14-alpine
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+
+
+stages:
+- build
+- deploy
+
+build:
+  stage: build
+  tags:
+    - docker
+  script:
+    - npm install
+
+deploy:
+  stage: deploy
+  tags:
+    - docker
+  image: ruby:alpine
+  script:
+    - apk update && apk add git curl
+    - gem install dpl
+    - dpl --provider=heroku --app=$HEROKU_APP_NAME --api-key=$HEROKU_API_KEY
+  environment:
+    name: production
+    url: https://$HEROKU_APP_NAME.herokuapp.com/
+  only:
+    refs:
+    - main  #branch name to deploy on heroku
+    variables:
+      - $HEROKU_APP_NAME
+      - $HEROKU_API_KEY

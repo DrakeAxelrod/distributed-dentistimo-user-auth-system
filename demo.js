@@ -21,6 +21,7 @@ client.on("connect", (ack, err) => {
 });
 
 client.subscribe("gateway");
+client.subscribe("users/login")
 
 client.on("message", (topic, message) => {
   log(message.toString());
