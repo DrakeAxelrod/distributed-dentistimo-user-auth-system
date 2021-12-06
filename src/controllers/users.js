@@ -1,52 +1,46 @@
-const passport = require("passport");
-const LocalStrategy = require("passport-local").Strategy;
 const model = require("../models").users
-
+const bcrypt = require("bcrypt")
+const SALT = 5
 const { log } = console;
 
-passport.serializeUser((serializedUser, done) => {
-  done(null, serializedUser._id);
-});
 
-passport.deserializeUser((id, done) => {
-  userModel.findOne({ _id: id }, (error, deserializedUser) => {
-    done(error, deserializedUser);
-  });
-});
+const hashPass = async (password) => await bcrypt.hash(password, SALT)
+const checkPass = async (reqPass, pass) => await bcrypt.compare(reqPass, pass)
 
-passport.use(
-  new LocalStrategy(
-    { usernameField: "email", passwordField: "password" },
-    (email, password, done) => {
-      model.findOne({ email: email }).then((foundUser) => {
-        if (!foundUser) {
-          console.log("No user found");
-          return done(null, false, { message: "User not found" });
-        } else if (password === foundUser.password) {
-          console.log("User has the same password");
-          return done(null, foundUser);
-        } else {
-          console.log("Incorrect password");
-          return done(null, false, { message: "incorrect password" });
-        }
-      });
+const login = async ({ email, password}) => { 
+  const result = await model.findOne({email: email}).then( async foundUser => {
+    if (!foundUser) 
+    {
+      return { authenticated: false, message: "User not found"} 
     }
-  )
-);
-
-const login = (username, password) => {
-  console.log(username, password)
-  // logic for login
-  passport.authenticate("local", () => {
-  });
+    const isCorrectPass = await checkPass(password, foundUser.password)
+    if (isCorrectPass) 
+    {
+      return { authenticated: true, message: foundUser }
+    }
+    else 
+    {
+        return { authenticated: false, message: "incorrect password" }
+    }
+  })
+  return result
+}
+const register = async (user) => {
+  user.password = await hashPass(user.password)
+  model.create(user, (err) => {
+    if (err) {
+      log(err)
+    }
+  })
 }
 
 const findAll = async () => {
-  const req = await model.find().then((res) => res).catch((err) => log(err));
-  return req
+  const res = await model.find().then((res) => res).catch((err) => log(err));
+  return res
 };
 
 module.exports = {
   findAll: findAll,
   login: login,
+  register: register
 };
