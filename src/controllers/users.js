@@ -1,7 +1,11 @@
-const model = require("../models").users
-const bcrypt = require("bcrypt")
-const SALT = 5
+const model = require("../models").users;
+const client = require("../utils/Client");
+const bcrypt = require("bcrypt");
+const SALT = 5;
 const { log } = console;
+
+
+const responsePath = "api/gateway/users"
 
 
 const hashPass = async (password) => await bcrypt.hash(password, SALT)
@@ -25,13 +29,19 @@ const login = async ({ email, password}) => {
   })
   return result
 }
-const register = async (user) => {
+const register = async (topic, user) => {
   user.password = await hashPass(user.password)
-  model.create(user, (err) => {
-    if (err) {
-      log(err)
-    }
-  })
+  const res = await model.create(user)
+  const new_user = {
+    _id: res._id, 
+    email: res.email,
+    name: { first: res.name.first, last: res.name.last },
+    personalNumber: res.personalNumber,
+    phone: res.phone,
+    bookings: res.bookings,
+  }
+  console.log(new_user)
+  client.publish(`${responsePath}/${topic}`, JSON.stringify(new_user))
 }
 
 const findAll = async () => {

@@ -27,18 +27,18 @@ client.on("message", (t, m) => {
   if (topic === "api/users") {
     client.emit("/")
   } else {
-    client.emit(topic, msg)
+    client.emit(topic, topic,  msg)
   }
 });
 
 // this is where routes go
 // so you listen for the topic and call relevant controller functions
-client.on("login", async (m) => {
-  const res = await controllers.users.login(m)
+client.on("login", async (t, m) => {
+  const res = await controllers.users.login(t, m)
    client.publish(responsePath + "/login", JSON.stringify(res));
 })
-client.on("register", (m) => {
-  controllers.users.register(m)
+client.on("register", (t, m) => {
+  controllers.users.register(t, m)
 });
 client.on("/", async () => {
   const res = await controllers.users.findAll()
