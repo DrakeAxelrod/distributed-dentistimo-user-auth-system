@@ -1,6 +1,13 @@
 const client = require("../utils/Client");
 const controllers = require("../controllers");
-const { log } = console;
+const CircuitBreaker = require("opossum");
+
+const options = {
+  timeout: 3000, // If our function takes longer than 3 seconds, trigger a failure
+  errorThresholdPercentage: 50, // When 50% of requests fail, trip the circuit
+  resetTimeout: 30000, // After 30 seconds, try again.
+};
+
 
 // set up base path
 const basePath = "api/users";
@@ -13,6 +20,7 @@ const topics = [
   { topic: "all", qos: 0 },
 ];
 topics.forEach((route) => {
+  
   client.subscribe(basePath + "/" + route.topic, { qos: route.qos });
 });
 
@@ -25,29 +33,27 @@ client.on("message", (t, m) => {
 
 client.on("login", async (t, m) => {
   const result = await controllers.users.login(m);
-  // const data = {
-  //   authenticated: result.authenticated,
-  //   message: {
-  //     _id: result.message._id,
-  //     email: result.message.email,
-  //     name: {
-  //       first: result.message.name.first,
-  //       last: result.message.name.last,
-  //     },
-  //     personalNumber: result.message.personalNumber,
-  //     phone: result.message.phone,
-  //   },
-  // };
-  client.publish(responsePath + "/login", result);
+  const breaker = new CircuitBreaker(
+    client.publish(responsePath + "/login", result),
+    options
+  );
+  const breakerResult = breaker
+    .fire()
+    .then((res) => res)
+    .catch(console.error);
+  //client.publish(responsePath + "/login", result);
 });
 client.on("register", (t, m) => {
-  controllers.users.register(t, m);
-});
-client.on("all", async () => {
-  const res = await controllers.users.findAll();
-  // log(res)
-  // send back to gateway
-  client.publish(responsePath, Buffer.from(res));
+  console.log(m)
+    const breaker = new CircuitBreaker(
+      controllers.users.register(t, m),
+      options
+    );
+    const breakerResult = breaker
+      .fire()
+      .then((res) => res)
+      .catch(console.error);
+  //controllers.users.register(t, m);
 });
 
 module.export = client;

@@ -24,6 +24,7 @@ const login = async (m) => {
         return { authenticated: false, message: "incorrect password" };
       }
     });
+  if (result.authenticated) {
   const data = {
     authenticated: result.authenticated,
     message: {
@@ -38,6 +39,9 @@ const login = async (m) => {
     },
   };
   return JSON.stringify(data);
+  } else {
+    return JSON.stringify(result)
+  }
 };
 
 const register = async (topic, user) => {

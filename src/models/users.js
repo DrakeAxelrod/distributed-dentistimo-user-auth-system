@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose
 
 const users = new Schema({
-  patientid: { type: Number },
-  email: { required: true, type: String },
+  email: { required: true, type: String, unique: true },
   name: {
     first: { required: true, type: String },
     last: { required: true, type: String },
