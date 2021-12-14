@@ -24,8 +24,22 @@ const login = async (m) => {
         return { authenticated: false, message: "incorrect password" };
       }
     });
-  return result;
+  const data = {
+    authenticated: result.authenticated,
+    message: {
+      _id: result.message._id,
+      email: result.message.email,
+      name: {
+        first: result.message.name.first,
+        last: result.message.name.last,
+      },
+      personalNumber: result.message.personalNumber,
+      phone: result.message.phone,
+    },
+  };
+  return JSON.stringify(data);
 };
+
 const register = async (topic, user) => {
   user.password = await hashPass(user.password);
   const res = await model.create(user);
