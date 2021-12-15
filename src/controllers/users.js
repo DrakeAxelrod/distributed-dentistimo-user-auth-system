@@ -2,7 +2,6 @@ const model = require("../models").users;
 const client = require("../utils/Client");
 const bcrypt = require("bcrypt");
 const SALT = 5;
-const { log } = console;
 
 const responsePath = "api/gateway/users";
 
@@ -10,7 +9,6 @@ const hashPass = async (password) => await bcrypt.hash(password, SALT);
 const checkPass = async (reqPass, pass) => await bcrypt.compare(reqPass, pass);
 
 const login = async (m) => {
-  console.log(m.email);
   const result = await model
     .findOne({ email: m.email })
     .then(async (foundUser) => {
@@ -23,7 +21,7 @@ const login = async (m) => {
       } else {
         return { authenticated: false, message: "incorrect password" };
       }
-    });
+    }).catch(err => (({ authenticated: false, message: "Something went wrong with your request please try again" })));
   if (result.authenticated) {
   const data = {
     authenticated: result.authenticated,
@@ -46,29 +44,26 @@ const login = async (m) => {
 
 const register = async (topic, user) => {
   user.password = await hashPass(user.password);
-  const res = await model.create(user);
-  const new_user = {
+  const res = await model.create(user).then(res => res).catch(err => new Error());
+  let new_user
+  if (res !== typeof Error) {
+    new_user = {
     _id: res._id,
     email: res.email,
     name: { first: res.name.first, last: res.name.last },
     personalNumber: res.personalNumber,
     phone: res.phone,
     bookings: res.bookings,
-  };
-  console.log(new_user);
+    };
+  } else {
+    new_user = { created: false }
+  }
+  
   client.publish(`${responsePath}/${topic}`, JSON.stringify(new_user));
 };
 
-const findAll = async () => {
-  const res = await model
-    .find()
-    .then((res) => res)
-    .catch((err) => log(err));
-  return res;
-};
 
 module.exports = {
-  findAll: findAll,
   login: login,
   register: register,
 };

@@ -15,9 +15,9 @@ const responsePath = "api/gateway/users";
 
 client.subscribe(basePath);
 const topics = [
-  { topic: "login", qos: 0 },
-  { topic: "register", qos: 0 },
-  { topic: "all", qos: 0 },
+  { topic: "login", qos: 2 },
+  { topic: "register", qos: 2 },
+  { topic: "all", qos: 2 },
 ];
 topics.forEach((route) => {
   
@@ -25,11 +25,16 @@ topics.forEach((route) => {
 });
 
 // emit the topic
-client.on("message", (t, m) => {
+const breaker = new CircuitBreaker(client.on("message", (t, m) => {
   const msg = JSON.parse(m.toString());
   const topic = t.replace(basePath + "/", ""); // api/users/login -> login
   client.emit(topic, topic, msg);
+}), {
+  timeout: 3000, // If our function takes longer than 3 seconds, trigger a failure
+  errorThresholdPercentage: 25, // When 25% of requests fail, trip the circuit
+  resetTimeout: 10000, // After 10 seconds, try again.
 });
+breaker.fire()
 
 client.on("login", async (t, m) => {
   const result = await controllers.users.login(m);
@@ -55,5 +60,6 @@ client.on("register", (t, m) => {
       .catch(console.error);
   //controllers.users.register(t, m);
 });
+
 
 module.export = client;
