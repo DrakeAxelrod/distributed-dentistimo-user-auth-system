@@ -1,5 +1,6 @@
 const client = require("../utils/Client");
 const controllers = require("../controllers");
+const { login, register } = controllers.users
 const CircuitBreaker = require("opossum");
 
 const options = {
@@ -7,6 +8,24 @@ const options = {
   errorThresholdPercentage: 50, // When 50% of requests fail, trip the circuit
   resetTimeout: 30000, // After 30 seconds, try again.
 };
+
+const circuits = {
+  login: new CircuitBreaker(login, options),
+  register: new CircuitBreaker(register, options)
+}
+circuits.login.fallback(() =>
+  JSON.stringify({
+    message: "the service is currently unavailable please try again later.",
+  })
+);
+circuits.register.fallback(() =>
+  JSON.stringify({
+    message: "the service is currently unavailable please try again later.",
+  })
+);
+
+circuits.login.on("failure", () => console.log("login failed"));
+circuits.register.on("failure", () => console.log("register failed"));
 
 
 // set up base path
@@ -25,40 +44,19 @@ topics.forEach((route) => {
 });
 
 // emit the topic
-const breaker = new CircuitBreaker(client.on("message", (t, m) => {
+client.on("message", (t, m) => {
   const msg = JSON.parse(m.toString());
   const topic = t.replace(basePath + "/", ""); // api/users/login -> login
-  client.emit(topic, topic, msg);
-}), {
-  timeout: 3000, // If our function takes longer than 3 seconds, trigger a failure
-  errorThresholdPercentage: 25, // When 25% of requests fail, trip the circuit
-  resetTimeout: 10000, // After 10 seconds, try again.
-});
-breaker.fire()
+  client.emit(topic, msg);
+})
 
-client.on("login", async (t, m) => {
-  const result = await controllers.users.login(m);
-  const breaker = new CircuitBreaker(
-    client.publish(responsePath + "/login", result),
-    options
-  );
-  const breakerResult = breaker
-    .fire()
-    .then((res) => res)
-    .catch(console.error);
-  //client.publish(responsePath + "/login", result);
+client.on("login", async (m) => {
+  const result = await circuits.login.fire(m);
+  client.publish(responsePath + "/login", result);
 });
-client.on("register", (t, m) => {
-  console.log(m)
-    const breaker = new CircuitBreaker(
-      controllers.users.register(t, m),
-      options
-    );
-    const breakerResult = breaker
-      .fire()
-      .then((res) => res)
-      .catch(console.error);
-  //controllers.users.register(t, m);
+client.on("register", async (m) => {
+  const result = await circuits.register.fire(m)
+  client.publish(responsePath + "/register", result);
 });
 
 

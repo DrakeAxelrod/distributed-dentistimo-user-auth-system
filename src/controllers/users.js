@@ -42,7 +42,7 @@ const login = async (m) => {
   }
 };
 
-const register = async (topic, user) => {
+const register = async (user) => {
   user.password = await hashPass(user.password);
   const res = await model.create(user).then(res => res).catch(err => new Error());
   let new_user
@@ -58,8 +58,7 @@ const register = async (topic, user) => {
   } else {
     new_user = { created: false }
   }
-  
-  client.publish(`${responsePath}/${topic}`, JSON.stringify(new_user));
+  return JSON.stringify(new_user);
 };
 
 
