@@ -1,6 +1,6 @@
 # team-16-project-authentication
 
-auth sub-system
+User Management System
 
 ## Developers <a name="developers"></a>
 
@@ -12,4 +12,4 @@ auth sub-system
 - [Johan Axell](https://git.chalmers.se/johanaxe)
 - [Asiya Ismail](https://git.chalmers.se/asiya)
 
-link 👉 [Documentation](https://github.com/DrakeAxelrod/distributed-dentistimo-documentation)
+## link 👉 [Documentation](https://github.com/DrakeAxelrod/distributed-dentistimo-documentation)
